@@ -34,3 +34,36 @@ BANNER = {
     PARTIAL: "Partial System Outage",
     MAJOR: "Major System Outage",
 }
+
+# --- Incident lifecycle -----------------------------------------------------
+
+INVESTIGATING = "investigating"
+IDENTIFIED = "identified"
+MONITORING = "monitoring"
+RESOLVED = "resolved"
+
+INCIDENT_STATUSES = [INVESTIGATING, IDENTIFIED, MONITORING, RESOLVED]
+
+# --- Feedback ---------------------------------------------------------------
+
+FB_NEW = "new"
+FB_UNDER_REVIEW = "under_review"
+FB_IN_PROGRESS = "in_progress"
+FB_FIXED = "fixed"
+FB_WONT_FIX = "wont_fix"
+FB_DUPLICATE = "duplicate"
+
+FEEDBACK_STATUSES = [
+    FB_NEW,
+    FB_UNDER_REVIEW,
+    FB_IN_PROGRESS,
+    FB_FIXED,
+    FB_WONT_FIX,
+    FB_DUPLICATE,
+]
+
+FEEDBACK_TYPES = ["issue", "suggestion"]
+
+# --- Roles ------------------------------------------------------------------
+
+ROLES = ["responder", "admin", "owner"]

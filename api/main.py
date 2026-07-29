@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from api import auth
 from api.constants import BANNER, OPERATIONAL, SEVERITY
 from api.db import get_client, get_db
 from api.models import Day, Group, Indicator, Service, Summary
@@ -25,14 +26,20 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Status Page API", lifespan=lifespan)
 
-# The frontend fetches server-side, but a browser-embedded status badge is an
-# explicit goal for this endpoint, so it is readable from anywhere.
+# The admin UI sends its session cookie cross-origin, and credentialed CORS
+# forbids a "*" origin — so origins are explicit. Add a badge embedder's origin
+# to CORS_ORIGINS to let it read the summary from the browser.
+# ponytail: comma-separated env var, not a config system.
+_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["GET"],
+    allow_origins=[o.strip() for o in _origins.split(",") if o.strip()],
+    allow_credentials=True,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth.router)
 
 # ponytail: single-process memo. Swap for Redis only if this runs on more than
 # one worker and the recompute cost actually shows up in latency.
