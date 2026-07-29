@@ -318,6 +318,8 @@ git commit -m "feat: mongo connection, schema validators, indexes"
 
 This module is pure: it takes events and returns numbers. No database, no I/O. That is what makes it directly testable.
 
+> **Correction applied during execution.** The test block below and the implementation below contradicted each other on whether the window includes today: the implementation's `first = today - DAY * (days - 1)` includes today, while `test_returns_the_requested_number_of_days_ending_today` pinned `NOW` to midnight and asserted a window ending yesterday. Ruling: **the window includes today as a partial day clipped at `now`**, so the implementation stands and the fixture was wrong. As shipped (commit `e5a326a`), `NOW` is `2026-01-04 12:00 UTC`, every `days=3` is `days=4`, and a `test_today_is_clipped_at_now_not_the_full_day` case pins the partial-day arithmetic. Read `api/test_uptime.py` for the current tests.
+
 - [ ] **Step 1: Write the failing tests**
 
 Create `api/test_uptime.py`:
