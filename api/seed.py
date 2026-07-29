@@ -149,7 +149,6 @@ async def main():
         {
             "email": "admin@example.com",
             "password_hash": hash_password(password),
-            "role": "owner",
             "created_at": now,
         }
     )

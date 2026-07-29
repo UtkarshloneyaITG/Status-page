@@ -63,7 +63,3 @@ FEEDBACK_STATUSES = [
 ]
 
 FEEDBACK_TYPES = ["issue", "suggestion"]
-
-# --- Roles ------------------------------------------------------------------
-
-ROLES = ["responder", "admin", "owner"]

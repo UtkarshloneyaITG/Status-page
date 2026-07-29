@@ -50,28 +50,14 @@ async def client(db):
 
 @pytest.fixture
 async def owner(db):
-    user = {
-        "email": "owner@example.com",
-        "password_hash": hash_password("owner-pw"),
-        "role": "owner",
-    }
-    await db.admin_users.insert_one(dict(user))
-    return {"email": user["email"], "password": "owner-pw", "role": "owner"}
-
-
-@pytest.fixture
-async def responder(db):
-    user = {
-        "email": "responder@example.com",
-        "password_hash": hash_password("responder-pw"),
-        "role": "responder",
-    }
-    await db.admin_users.insert_one(dict(user))
-    return {
-        "email": user["email"],
-        "password": "responder-pw",
-        "role": "responder",
-    }
+    """The one kind of account there is: an admin."""
+    await db.admin_users.insert_one(
+        {
+            "email": "admin@example.com",
+            "password_hash": hash_password("admin-pw"),
+        }
+    )
+    return {"email": "admin@example.com", "password": "admin-pw"}
 
 
 async def login(client, account) -> None:

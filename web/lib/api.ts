@@ -27,14 +27,25 @@ export type Summary = {
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
 
-export async function getSummary(): Promise<Summary> {
-  // The API already memoizes for 60s; matching that here keeps the page fresh
-  // without hammering it.
-  const res = await fetch(`${API}/api/v1/status/summary`, {
-    next: { revalidate: 60 },
-  });
-  if (!res.ok) throw new Error(`status API returned ${res.status}`);
-  return res.json();
+/**
+ * Returns null when the API cannot be reached.
+ *
+ * A status page that fails to build or render because its backend is down is
+ * the one thing this page must never do — that is exactly when people load it.
+ * The caller renders a degraded view instead.
+ */
+export async function getSummary(): Promise<Summary | null> {
+  try {
+    // The API already memoizes for 60s; matching that here keeps the page
+    // fresh without hammering it.
+    const res = await fetch(`${API}/api/v1/status/summary`, {
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
 }
 
 /** Every service on the page, groups flattened, in display order. */

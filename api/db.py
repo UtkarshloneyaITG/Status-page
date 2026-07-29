@@ -15,7 +15,6 @@ from api.constants import (
     FEEDBACK_STATUSES,
     FEEDBACK_TYPES,
     INCIDENT_STATUSES,
-    ROLES,
     STATUSES,
 )
 
@@ -78,10 +77,9 @@ VALIDATORS = {
         {
             "email": {"bsonType": "string"},
             "password_hash": {"bsonType": "string"},
-            "role": {"enum": ROLES},
             "created_at": {"bsonType": "date"},
         },
-        ["email", "password_hash", "role"],
+        ["email", "password_hash"],
     ),
     "incidents": _obj(
         {

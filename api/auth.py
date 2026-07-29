@@ -1,8 +1,8 @@
-"""Admin authentication: bcrypt passwords, signed session cookie, roles.
+"""Admin authentication: bcrypt passwords, signed session cookie.
 
-No third-party auth service. The whole surface is three endpoints and one
-dependency factory, because the only thing that logs in here is a handful of
-operators.
+The public side of this app has no accounts and no login — anyone can submit a
+report. Auth exists only to gate /admin, so there is one kind of user and no
+role hierarchy.
 """
 
 import logging
@@ -19,8 +19,14 @@ log = logging.getLogger(__name__)
 COOKIE_NAME = "statuspage_session"
 SESSION_MAX_AGE = 7 * 24 * 3600
 
-# Ordered weakest to strongest; a route names the minimum it accepts.
-ROLE_ORDER = ["responder", "admin", "owner"]
+# In development the API and the site share localhost, so Lax works and keeps
+# the CSRF protection Lax gives you. In production they are usually different
+# hosts (Render + Vercel), and a Lax cookie is simply never sent — so set
+# COOKIE_SAMESITE=none there. Browsers reject SameSite=None without Secure,
+# so that combination forces Secure on regardless of what else is configured.
+COOKIE_SAMESITE = os.getenv("COOKIE_SAMESITE", "lax").lower()
+_FORCE_SECURE = os.getenv("COOKIE_SECURE", "").lower() in {"1", "true", "yes"}
+_SECURE = _FORCE_SECURE or COOKIE_SAMESITE == "none"
 
 _secret = os.getenv("SESSION_SECRET")
 if not _secret:
@@ -49,22 +55,15 @@ def verify_password(password: str, hashed: str) -> bool:
         return False
 
 
-def role_at_least(role: str, minimum: str) -> bool:
-    try:
-        return ROLE_ORDER.index(role) >= ROLE_ORDER.index(minimum)
-    except ValueError:
-        return False
-
-
 def issue_session(response: Response, user: dict, secure: bool = False) -> None:
-    token = _serializer.dumps({"email": user["email"], "role": user["role"]})
+    token = _serializer.dumps({"email": user["email"]})
     response.set_cookie(
         COOKIE_NAME,
         token,
         max_age=SESSION_MAX_AGE,
         httponly=True,
-        samesite="lax",
-        secure=secure,
+        samesite=COOKIE_SAMESITE,
+        secure=secure or _SECURE,
         path="/",
     )
 
@@ -79,18 +78,12 @@ def read_session(request: Request) -> dict | None:
         return None
 
 
-def require_role(minimum: str):
-    """Dependency factory: 401 when signed out, 403 when under-privileged."""
-
-    def dependency(request: Request) -> dict:
-        session = read_session(request)
-        if session is None:
-            raise HTTPException(status_code=401, detail="Not authenticated")
-        if not role_at_least(session.get("role", ""), minimum):
-            raise HTTPException(status_code=403, detail="Insufficient role")
-        return session
-
-    return dependency
+def require_admin(request: Request) -> dict:
+    """The only gate in the app. 401 when there is no valid session."""
+    session = read_session(request)
+    if session is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return session
 
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
@@ -103,7 +96,6 @@ class LoginBody(BaseModel):
 
 class Identity(BaseModel):
     email: str
-    role: str
 
 
 @router.post("/login", response_model=Identity)
@@ -116,15 +108,19 @@ async def login(body: LoginBody, request: Request, response: Response):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     issue_session(response, user, secure=request.url.scheme == "https")
-    return Identity(email=user["email"], role=user["role"])
+    return Identity(email=user["email"])
 
 
 @router.post("/logout")
 async def logout(response: Response):
-    response.delete_cookie(COOKIE_NAME, path="/")
+    # The attributes must match those the cookie was set with, or the browser
+    # keeps it.
+    response.delete_cookie(
+        COOKIE_NAME, path="/", samesite=COOKIE_SAMESITE, secure=_SECURE
+    )
     return {"ok": True}
 
 
 @router.get("/me", response_model=Identity)
-async def me(session: dict = Depends(require_role("responder"))):
-    return Identity(email=session["email"], role=session["role"])
+async def me(session: dict = Depends(require_admin)):
+    return Identity(email=session["email"])

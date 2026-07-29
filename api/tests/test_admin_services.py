@@ -26,12 +26,9 @@ async def test_every_admin_route_rejects_anonymous(client, db):
 
 
 @needs_mongo
-async def test_responder_is_forbidden_from_service_management(
-    client, responder
-):
-    await login(client, responder)
-    res = await client.get("/api/v1/admin/services")
-    assert res.status_code == 403
+async def test_a_signed_in_admin_may_manage_services(client, owner):
+    await login(client, owner)
+    assert (await client.get("/api/v1/admin/services")).status_code == 200
 
 
 @needs_mongo

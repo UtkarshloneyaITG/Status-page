@@ -13,6 +13,7 @@ from bson.errors import InvalidId
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from api.auth import require_admin
 from api.constants import STATUSES
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
@@ -85,15 +86,9 @@ class StatusIn(BaseModel):
 # --- services ---------------------------------------------------------------
 
 
-def _require_admin():
-    from api.auth import require_role
-
-    return require_role("admin")
-
-
 @router.get("/services")
 async def list_services(
-    request: Request, _: dict = Depends(_require_admin())
+    request: Request, _: dict = Depends(require_admin)
 ):
     db = request.app.state.db
     out = []
@@ -115,7 +110,7 @@ async def list_services(
 async def create_service(
     body: ServiceIn,
     request: Request,
-    session: dict = Depends(_require_admin()),
+    session: dict = Depends(require_admin),
 ):
     db = request.app.state.db
     now = datetime.now(timezone.utc)
@@ -142,7 +137,7 @@ async def update_service(
     service_id: str,
     body: ServicePatch,
     request: Request,
-    _: dict = Depends(_require_admin()),
+    _: dict = Depends(require_admin),
 ):
     changes = body.model_dump(exclude_unset=True)
     if "group_id" in changes:
@@ -159,7 +154,7 @@ async def update_service(
 
 @router.delete("/services/{service_id}")
 async def delete_service(
-    service_id: str, request: Request, _: dict = Depends(_require_admin())
+    service_id: str, request: Request, _: dict = Depends(require_admin)
 ):
     db = request.app.state.db
     sid = oid(service_id)
@@ -174,7 +169,7 @@ async def delete_service(
 
 @router.post("/services/reorder")
 async def reorder_services(
-    body: Reorder, request: Request, _: dict = Depends(_require_admin())
+    body: Reorder, request: Request, _: dict = Depends(require_admin)
 ):
     db = request.app.state.db
     for position, service_id in enumerate(body.ids):
@@ -189,7 +184,7 @@ async def set_status(
     service_id: str,
     body: StatusIn,
     request: Request,
-    session: dict = Depends(_require_admin()),
+    session: dict = Depends(require_admin),
 ):
     event = await record_status(
         request.app.state.db,
@@ -205,7 +200,7 @@ async def set_status(
 
 
 @router.get("/groups")
-async def list_groups(request: Request, _: dict = Depends(_require_admin())):
+async def list_groups(request: Request, _: dict = Depends(require_admin)):
     return [
         {"id": str(g["_id"]), "name": g["name"], "position": g["position"]}
         async for g in request.app.state.db.service_groups.find().sort("position", 1)
@@ -214,7 +209,7 @@ async def list_groups(request: Request, _: dict = Depends(_require_admin())):
 
 @router.post("/groups", status_code=201)
 async def create_group(
-    body: GroupIn, request: Request, _: dict = Depends(_require_admin())
+    body: GroupIn, request: Request, _: dict = Depends(require_admin)
 ):
     db = request.app.state.db
     last = await db.service_groups.find_one(sort=[("position", -1)])
@@ -229,7 +224,7 @@ async def update_group(
     group_id: str,
     body: GroupIn,
     request: Request,
-    _: dict = Depends(_require_admin()),
+    _: dict = Depends(require_admin),
 ):
     result = await request.app.state.db.service_groups.update_one(
         {"_id": oid(group_id)}, {"$set": {"name": body.name}}
@@ -241,7 +236,7 @@ async def update_group(
 
 @router.delete("/groups/{group_id}")
 async def delete_group(
-    group_id: str, request: Request, _: dict = Depends(_require_admin())
+    group_id: str, request: Request, _: dict = Depends(require_admin)
 ):
     db = request.app.state.db
     gid = oid(group_id)
@@ -255,7 +250,7 @@ async def delete_group(
 
 @router.post("/groups/reorder")
 async def reorder_groups(
-    body: Reorder, request: Request, _: dict = Depends(_require_admin())
+    body: Reorder, request: Request, _: dict = Depends(require_admin)
 ):
     db = request.app.state.db
     for position, group_id in enumerate(body.ids):

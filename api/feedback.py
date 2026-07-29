@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
 
 from api.admin_services import oid
+from api.auth import require_admin
 from api.constants import (
     FB_FIXED,
     FB_NEW,
@@ -59,12 +60,6 @@ async def _next_ref(db) -> str:
         if await db.feedback.find_one({"ref_code": ref}) is None:
             return ref
     raise HTTPException(503, "Could not allocate a reference code")
-
-
-def _require_responder():
-    from api.auth import require_role
-
-    return require_role("responder")
 
 
 class FeedbackIn(BaseModel):
@@ -199,7 +194,7 @@ async def inbox(
     request: Request,
     status: str | None = FB_NEW,
     type: str | None = None,
-    _: dict = Depends(_require_responder()),
+    _: dict = Depends(require_admin),
 ):
     """Defaults to the new reports — the queue an admin actually works."""
     db = request.app.state.db
@@ -223,7 +218,7 @@ async def triage(
     ref_code: str,
     body: Triage,
     request: Request,
-    _: dict = Depends(_require_responder()),
+    _: dict = Depends(require_admin),
 ):
     db = request.app.state.db
     changes = body.model_dump(exclude_unset=True)
@@ -253,7 +248,7 @@ async def triage(
 async def bulk(
     request: Request,
     body: dict,
-    _: dict = Depends(_require_responder()),
+    _: dict = Depends(require_admin),
 ):
     """Apply one status to several reports at once."""
     refs = body.get("ref_codes") or []
@@ -276,7 +271,7 @@ async def bulk(
 
 @admin_router.delete("/{ref_code}")
 async def delete(
-    ref_code: str, request: Request, _: dict = Depends(_require_responder())
+    ref_code: str, request: Request, _: dict = Depends(require_admin)
 ):
     result = await request.app.state.db.feedback.delete_one({"ref_code": ref_code})
     if result.deleted_count == 0:

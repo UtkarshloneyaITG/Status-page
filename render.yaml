@@ -1,0 +1,44 @@
+# Render Blueprint for the status page API.
+# Deploy with: New > Blueprint, point at this repo. Render reads this file.
+#
+# Only the backend lives here. The Next.js frontend deploys separately
+# (Vercel, or a second Render service) and talks to this one over HTTP.
+
+services:
+  - type: web
+    name: statuspage-api
+    runtime: python
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: pip install -r api/requirements.txt
+    # Render supplies $PORT and expects the process to bind 0.0.0.0.
+    # --proxy-headers so the app sees the real scheme behind Render's proxy.
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT --proxy-headers
+    healthCheckPath: /api/v1/status/summary
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.10"
+
+      # Secrets — set these in the Render dashboard, never in this file.
+      - key: MONGO_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+
+      - key: MONGO_DB
+        value: statuspage
+      - key: PRODUCT_NAME
+        value: Status
+
+      # Must list the exact frontend origin, scheme included, no trailing
+      # slash. Credentialed CORS forbids "*", so this cannot be a wildcard.
+      - key: CORS_ORIGINS
+        sync: false
+
+      # The frontend is on a different host in production, so a Lax cookie
+      # would never be sent. None + Secure is what makes admin login work.
+      - key: COOKIE_SAMESITE
+        value: none
+      - key: COOKIE_SECURE
+        value: "true"

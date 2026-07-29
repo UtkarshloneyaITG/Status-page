@@ -78,11 +78,15 @@ export function apiUrl(path: string): string {
   return `${API}${path}`;
 }
 
-/** The published log shown on the status page. */
+/** The published log. Empty when the API is unreachable — never throws. */
 export async function getPublicFeedback(): Promise<FeedbackItem[]> {
-  const res = await fetch(apiUrl("/api/v1/feedback"), {
-    next: { revalidate: 30 },
-  });
-  if (!res.ok) return [];
-  return (await res.json()).items;
+  try {
+    const res = await fetch(apiUrl("/api/v1/feedback"), {
+      next: { revalidate: 30 },
+    });
+    if (!res.ok) return [];
+    return (await res.json()).items;
+  } catch {
+    return [];
+  }
 }
