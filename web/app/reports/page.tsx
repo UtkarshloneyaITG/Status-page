@@ -5,6 +5,8 @@ import { getPublicFeedback } from "@/lib/feedback";
 
 export const metadata = { title: "Reported and resolved" };
 
+export const dynamic = "force-dynamic";
+
 export default async function ReportsPage() {
   const items = await getPublicFeedback();
 

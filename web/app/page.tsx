@@ -9,6 +9,8 @@ import ReportDrawer from "@/components/ReportDrawer";
 import { allServices, getSummary } from "@/lib/api";
 import { getPublicFeedback } from "@/lib/feedback";
 
+export const dynamic = "force-dynamic";
+
 export default async function Page() {
   const [summary, feedback] = await Promise.all([
     getSummary(),
