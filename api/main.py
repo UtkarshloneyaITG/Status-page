@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api import admin_services, auth
+from api import admin_services, auth, feedback
 from api.constants import BANNER, OPERATIONAL, SEVERITY
 from api.db import get_client, get_db
 from api.models import Day, Group, Indicator, Service, Summary
@@ -41,6 +41,8 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(admin_services.router)
+app.include_router(feedback.public_router)
+app.include_router(feedback.admin_router)
 
 # ponytail: single-process memo. Swap for Redis only if this runs on more than
 # one worker and the recompute cost actually shows up in latency.

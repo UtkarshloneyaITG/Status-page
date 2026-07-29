@@ -141,6 +141,7 @@ VALIDATORS = {
             "duplicate_of": {"bsonType": ["objectId", "null"]},
             "incident_id": {"bsonType": ["objectId", "null"]},
             "created_at": {"bsonType": "date"},
+            "resolved_at": {"bsonType": ["date", "null"]},
         },
         ["ref_code", "type", "title", "description", "status", "created_at"],
     ),
