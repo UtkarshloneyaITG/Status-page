@@ -16,7 +16,7 @@ cycles get their own spec → plan → implementation pass.
 | Decision | Choice | Reason |
 |---|---|---|
 | Frontend | Next.js App Router, TypeScript, Tailwind | Per brief |
-| Backend | FastAPI + Motor (async MongoDB driver) | User chose Python + MongoDB |
+| Backend | FastAPI + PyMongo `AsyncMongoClient` | User chose Python + MongoDB; Motor is deprecated in favor of PyMongo's built-in async client, so this is one dependency fewer |
 | Database | MongoDB | User chose |
 | Boundary | Only `api/` touches MongoDB | One place knows the schema |
 | Product name | `PRODUCT_NAME` env var, default `"Status"` | Name deferred by user |
