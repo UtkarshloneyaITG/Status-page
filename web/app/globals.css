@@ -28,3 +28,72 @@ body {
   animation: pulse-ring 2s infinite;
 }
 
+/* Glassmorphism & SaaS Utilities */
+.glass-header {
+  background-color: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.card-hover-effect {
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.card-hover-effect:hover {
+  border-color: rgba(148, 163, 184, 0.8);
+}
+
+/* Drawer smooth opening and closing animations */
+dialog.drawer-panel {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.35s ease,
+              overlay 0.35s ease allow-discrete,
+              display 0.35s ease allow-discrete;
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+dialog[open].drawer-panel {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+dialog[open].drawer-panel.closing {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+@starting-style {
+  dialog[open].drawer-panel {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Smooth Backdrop Overlay */
+dialog.drawer-panel::backdrop {
+  transition: background-color 0.35s ease,
+              backdrop-filter 0.35s ease,
+              overlay 0.35s ease allow-discrete,
+              display 0.35s ease allow-discrete;
+  background-color: rgba(15, 23, 42, 0);
+  backdrop-filter: blur(0px);
+}
+
+dialog[open].drawer-panel::backdrop {
+  background-color: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(2px);
+}
+
+dialog[open].drawer-panel.closing::backdrop {
+  background-color: rgba(15, 23, 42, 0);
+  backdrop-filter: blur(0px);
+}
+
+@starting-style {
+  dialog[open].drawer-panel::backdrop {
+    background-color: rgba(15, 23, 42, 0);
+    backdrop-filter: blur(0px);
+  }
+}
+

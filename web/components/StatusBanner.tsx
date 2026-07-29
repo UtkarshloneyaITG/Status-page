@@ -1,44 +1,53 @@
+"use client";
+
+import { motion } from "framer-motion";
 import type { Indicator } from "@/lib/api";
 import { meta } from "@/lib/status";
 
-export default function StatusBanner({ indicator }: { indicator: Indicator }) {
+export default function StatusBanner({
+  indicator,
+}: {
+  indicator: Indicator;
+}) {
   const m = meta(indicator.level);
   const isOperational = indicator.level === "operational";
 
   return (
-    <section
+    <motion.section
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.35 }}
       aria-live="polite"
       aria-atomic="true"
-      className={`relative overflow-hidden flex items-center justify-between gap-4 rounded-2xl border ${
+      className={`relative overflow-hidden rounded-none border p-5 sm:p-6 ${
         isOperational
-          ? "border-emerald-200/80 bg-gradient-to-r from-emerald-50/80 via-white to-emerald-50/30"
-          : "border-amber-200/80 bg-gradient-to-r from-amber-50/80 via-white to-amber-50/30"
-      } p-6 sm:p-7 shadow-xs`}
+          ? "border-emerald-200 bg-emerald-50/60 text-slate-900"
+          : "border-amber-200 bg-amber-50/60 text-slate-900"
+      }`}
     >
       <div className="flex items-center gap-4">
-        <div className="relative flex items-center justify-center">
+        <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-none bg-white border border-slate-200">
           <span
-            aria-hidden="true"
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl font-bold text-white shadow-sm ${m.dot} ${
+            className={`flex h-8 w-8 items-center justify-center rounded-none font-bold text-white text-base ${m.dot} ${
               isOperational ? "pulse-emerald" : ""
             }`}
           >
-            {m.icon}
+            {isOperational ? (
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            )}
           </span>
         </div>
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            System Overview
-          </span>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight sm:text-2xl">
-            {indicator.text}
-          </h1>
-        </div>
+
+        <h2 className="text-lg font-extrabold tracking-tight text-slate-900 sm:text-xl">
+          {indicator.text}
+        </h2>
       </div>
-      <div className="hidden sm:flex items-center gap-2 rounded-full bg-white/90 px-3.5 py-1.5 border border-slate-200 text-xs font-semibold text-slate-700 shadow-xs">
-        <span className={`h-2 w-2 rounded-full ${m.dot}`} />
-        <span>Live Status</span>
-      </div>
-    </section>
+    </motion.section>
   );
 }

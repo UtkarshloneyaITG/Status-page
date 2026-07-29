@@ -1,14 +1,24 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import EmptyState from "@/components/EmptyState";
+import { AdminTableSkeleton } from "@/components/SkeletonLoader";
 import {
   apiUrl,
   feedbackMeta,
   FEEDBACK_STATUSES,
   type AdminFeedbackItem,
 } from "@/lib/feedback";
+
+import ActivityTimeline from "@/components/admin/ActivityTimeline";
+import DescriptionCard from "@/components/admin/DescriptionCard";
+import EnvironmentCard from "@/components/admin/EnvironmentCard";
+import IssueHeader from "@/components/admin/IssueHeader";
+import PublicResponseCard from "@/components/admin/PublicResponseCard";
+import StatusSidebar from "@/components/admin/StatusSidebar";
 
 type Inbox = { counts: Record<string, number>; items: AdminFeedbackItem[] };
 
@@ -39,7 +49,6 @@ export default function AdminPage() {
       setInbox(await res.json());
       setSelected(new Set());
     } catch {
-      // A down API must show a message, not crash the page.
       setError(
         "Couldn't reach the API. Is it running on " + apiUrl("") + "?",
       );
@@ -47,13 +56,31 @@ export default function AdminPage() {
   }, [filter, router]);
 
   useEffect(() => {
-    // Fetching the inbox from the API is exactly the external-system sync an
-    // effect is for; the setState happens after the await, not synchronously.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
 
   async function patch(ref: string, body: Record<string, unknown>) {
+    setInbox((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        items: prev.items.map((item) => {
+          if (item.ref_code === ref) {
+            const nextStatus = (body.status as string) ?? item.status;
+            const isFixed = nextStatus === "fixed";
+            return {
+              ...item,
+              ...body,
+              status: nextStatus,
+              is_public: isFixed ? true : ((body.is_public as boolean) ?? item.is_public),
+              admin_reply: body.admin_reply !== undefined ? (body.admin_reply as string | null) : item.admin_reply,
+            };
+          }
+          return item;
+        }),
+      };
+    });
+
     try {
       const res = await fetch(apiUrl(`/api/v1/admin/feedback/${ref}`), {
         method: "PATCH",
@@ -68,14 +95,42 @@ export default function AdminPage() {
     await load();
   }
 
+  async function deleteReport(ref: string) {
+    try {
+      const res = await fetch(apiUrl(`/api/v1/admin/feedback/${ref}`), {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) setError("Couldn't delete report.");
+    } catch {
+      setError("Couldn't reach the API.");
+    }
+    await load();
+  }
+
   async function bulkFix() {
     if (selected.size === 0) return;
+
+    const refsToFix = Array.from(selected);
+
+    setInbox((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        items: prev.items.map((item) =>
+          refsToFix.includes(item.ref_code)
+            ? { ...item, status: "fixed", is_public: true }
+            : item
+        ),
+      };
+    });
+
     try {
       await fetch(apiUrl("/api/v1/admin/feedback/bulk"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ ref_codes: [...selected], status: "fixed" }),
+        body: JSON.stringify({ ref_codes: refsToFix, status: "fixed" }),
       });
     } catch {
       setError("Couldn't reach the API.");
@@ -90,26 +145,34 @@ export default function AdminPage() {
         credentials: "include",
       });
     } catch {
-      // Signing out locally still matters when the API is unreachable.
+      // Ignore network failure on logout
     }
     router.push("/admin/login");
   }
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-12 space-y-6">
+    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Admin Inbox</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Admin Feedback Management</h1>
           <p className="mt-1 text-xs font-medium text-slate-500">
-            Triage, update status, and respond to incoming user reports
+            Triage, update status, and publish official responses to user reports
           </p>
         </div>
-        <button
-          onClick={signOut}
-          className="rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-slate-900 transition-colors"
-        >
-          Sign out
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/admin/services"
+            className="rounded-none bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 transition-colors"
+          >
+            Manage Services →
+          </Link>
+          <button
+            onClick={signOut}
+            className="rounded-none border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+          >
+            Sign out
+          </button>
+        </div>
       </div>
 
       {inbox && (
@@ -117,7 +180,7 @@ export default function AdminPage() {
           {["new", "in_progress", "fixed", "wont_fix"].map((s) => (
             <div
               key={s}
-              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs"
+              className="rounded-none border border-slate-200 bg-white p-4"
             >
               <div className="text-3xl font-bold text-slate-900">
                 {inbox.counts[s] ?? 0}
@@ -136,9 +199,9 @@ export default function AdminPage() {
             key={value}
             onClick={() => setFilter(value)}
             aria-pressed={filter === value}
-            className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all ${
+            className={`rounded-none px-3.5 py-1.5 text-xs font-semibold transition-all ${
               filter === value
-                ? "bg-indigo-600 text-white shadow-2xs"
+                ? "bg-indigo-600 text-white"
                 : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
             }`}
           >
@@ -148,11 +211,11 @@ export default function AdminPage() {
       </div>
 
       {selected.size > 0 && (
-        <div className="flex items-center justify-between rounded-xl border border-indigo-200 bg-indigo-50/80 px-4 py-3 text-xs font-semibold text-indigo-900 shadow-2xs">
+        <div className="flex items-center justify-between rounded-none border border-indigo-200 bg-indigo-50/80 px-4 py-3 text-xs font-semibold text-indigo-900">
           <span>{selected.size} reports selected</span>
           <button
             onClick={bulkFix}
-            className="rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 transition-colors"
+            className="rounded-none bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 transition-colors"
           >
             Mark selected fixed ✓
           </button>
@@ -160,20 +223,24 @@ export default function AdminPage() {
       )}
 
       {error && (
-        <div role="alert" className="text-xs font-semibold text-red-600 bg-red-50 p-3.5 rounded-xl border border-red-200">
+        <div role="alert" className="text-xs font-semibold text-red-600 bg-red-50 p-3.5 rounded-none border border-red-200">
           {error}
         </div>
       )}
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
-        <ul className="divide-y divide-slate-100">
-          {inbox?.items.length === 0 && (
-            <li className="py-12 text-center text-sm font-medium text-slate-400">
-              No reports found in this view.
-            </li>
-          )}
+      {!inbox && !error ? (
+        <AdminTableSkeleton />
+      ) : inbox?.items.length === 0 ? (
+        <EmptyState
+          title="All caught up"
+          description="There are no reports in this view queue."
+          resetLabel="View All Reports"
+          onReset={() => setFilter("all")}
+        />
+      ) : (
+        <div className="space-y-8">
           {inbox?.items.map((item) => (
-            <Report
+            <ReportItem
               key={item.ref_code}
               item={item}
               checked={selected.has(item.ref_code)}
@@ -189,134 +256,111 @@ export default function AdminPage() {
                 })
               }
               onPatch={(body) => patch(item.ref_code, body)}
+              onDelete={() => deleteReport(item.ref_code)}
             />
           ))}
-        </ul>
-      </div>
+        </div>
+      )}
     </main>
   );
 }
 
-function Report({
+function ReportItem({
   item,
   checked,
   onToggleSelect,
   onPatch,
+  onDelete,
 }: {
   item: AdminFeedbackItem;
   checked: boolean;
   onToggleSelect: () => void;
   onPatch: (body: Record<string, unknown>) => void;
+  onDelete: () => void;
 }) {
-  const [reply, setReply] = useState(item.admin_reply ?? "");
+  const [minimized, setMinimized] = useState(false);
   const m = feedbackMeta(item.status);
 
-  return (
-    <li className="py-5 first:pt-0 last:pb-0">
-      <div className="flex items-start gap-3.5">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={onToggleSelect}
-          aria-label={`Select ${item.ref_code}`}
-          className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-        />
-
-        <div className="min-w-0 flex-1 space-y-2">
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-            <h3 className="font-semibold text-slate-900 text-sm sm:text-base">{item.title}</h3>
-            <span className={`inline-flex items-center gap-1.5 text-xs ${m.text}`}>
-              <span aria-hidden="true">{m.icon}</span>
-              {m.label}
+  if (minimized) {
+    return (
+      <div className="rounded-none border border-slate-300 bg-white p-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3 min-w-0 flex-1">
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={onToggleSelect}
+            className="h-4 w-4 rounded-none border-slate-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          <span className="font-mono text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-none">
+            {item.ref_code}
+          </span>
+          <h3 className="font-bold text-slate-900 text-sm truncate max-w-xs">{item.title}</h3>
+          <span className={`inline-flex items-center gap-1.5 text-xs font-bold ${m.text}`}>
+            <span aria-hidden="true">{m.icon}</span>
+            {m.label}
+          </span>
+          {item.is_public && (
+            <span className="rounded-none bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+              Published
             </span>
-          </div>
-
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-            {item.description}
-          </p>
-
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
-            <span className="font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-semibold text-[11px]">
-              {item.ref_code}
-            </span>
-            <span className="capitalize">{item.type}</span>
-            {item.service && <span>• {item.service}</span>}
-            {item.reporter_email && <span>• {item.reporter_email}</span>}
-            <time dateTime={item.created_at} className="text-[11px]">
-              {new Date(item.created_at).toUTCString()}
-            </time>
-            {item.is_public && (
-              <span className="rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
-                Published
-              </span>
-            )}
-          </div>
-
-          {item.browser_meta && (
-            <details className="text-xs text-slate-500">
-              <summary className="cursor-pointer font-semibold text-slate-600 hover:text-slate-800">
-                Environment Details
-              </summary>
-              <dl className="mt-1.5 space-y-1 rounded-lg bg-slate-50 p-2.5 text-[11px]">
-                {Object.entries(item.browser_meta).map(([k, v]) => (
-                  <div key={k} className="flex gap-2">
-                    <dt className="font-bold text-slate-700 capitalize">{k.replace("_", " ")}:</dt>
-                    <dd className="truncate text-slate-600">{v}</dd>
-                  </div>
-                ))}
-              </dl>
-            </details>
           )}
+        </div>
 
-          <div className="pt-2 flex flex-wrap items-center gap-2">
-            <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-              Status:
-              <select
-                value={item.status}
-                onChange={(e) => onPatch({ status: e.target.value })}
-                className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-800 shadow-2xs outline-none focus:border-indigo-500"
-              >
-                {FEEDBACK_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {feedbackMeta(s).label}
-                  </option>
-                ))}
-              </select>
-            </label>
+        <button
+          type="button"
+          onClick={() => setMinimized(false)}
+          className="rounded-none border border-slate-300 bg-white px-3 py-1 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+        >
+          Expand Panel ▼
+        </button>
+      </div>
+    );
+  }
 
-            <button
-              onClick={() => onPatch({ is_public: !item.is_public })}
-              className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors"
-            >
-              {item.is_public ? "Hide from Status Page" : "Publish on Status Page"}
-            </button>
-
-            {item.status !== "fixed" && (
-              <button
-                onClick={() => onPatch({ status: "fixed", admin_reply: reply || null })}
-                className="rounded-lg bg-emerald-600 px-3 py-1 text-xs font-bold text-white shadow-2xs hover:bg-emerald-700 transition-colors"
-              >
-                Mark Fixed ✓
-              </button>
-            )}
-          </div>
-
-          <div className="flex flex-wrap gap-2 pt-1">
-            <input
-              value={reply}
-              onChange={(e) => setReply(e.target.value)}
-              placeholder="Write a public response for the status page..."
-              className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 shadow-2xs outline-none focus:border-indigo-500"
-            />
-            <button
-              onClick={() => onPatch({ admin_reply: reply || null })}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors"
-            >
-              Save Response
-            </button>
-          </div>
+  return (
+    <div className="rounded-none border border-slate-300 bg-slate-50/50 p-4 sm:p-6 space-y-4">
+      {/* Top Selector Checkbox & Minimize Toggle */}
+      <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+        <label className="flex items-center gap-2.5 text-xs font-bold text-slate-700 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={onToggleSelect}
+            className="h-4 w-4 rounded-none border-slate-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          <span>Select Report for Bulk Operations</span>
+        </label>
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-[11px] font-bold text-slate-500">{item.ref_code}</span>
+          <button
+            type="button"
+            onClick={() => setMinimized(true)}
+            className="rounded-none border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+          >
+            Minimize Panel ▲
+          </button>
         </div>
       </div>
-    </li>
+
+      {/* 2-Column SaaS Enterprise Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column (70% - 8 cols) */}
+        <div className="lg:col-span-8 space-y-5">
+          <IssueHeader item={item} />
+          <DescriptionCard description={item.description} />
+          <PublicResponseCard
+            initialReply={item.admin_reply}
+            onSave={(reply) => onPatch({ admin_reply: reply })}
+          />
+          <EnvironmentCard meta={item.browser_meta} />
+        </div>
+
+        {/* Right Column / Sidebar (30% - 4 cols) */}
+        <div className="lg:col-span-4 space-y-5">
+          <StatusSidebar item={item} onPatch={onPatch} onDelete={onDelete} />
+          <ActivityTimeline item={item} />
+        </div>
+      </div>
+    </div>
   );
 }

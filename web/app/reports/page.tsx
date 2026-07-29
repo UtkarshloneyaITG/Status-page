@@ -12,7 +12,7 @@ export default async function ReportsPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-12 space-y-6">
-      <div>
+      <div className="border-b border-slate-200 pb-5">
         <Link
           href="/"
           className="inline-flex items-center text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
@@ -20,18 +20,15 @@ export default async function ReportsPage() {
           ← Back to Status Overview
         </Link>
 
-        <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+        <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           Incident & Resolution Log
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Public log of user reports and engineering updates. {items.length}{" "}
-          {items.length === 1 ? "report" : "reports"} published.
+        <p className="mt-1 text-xs text-slate-500">
+          Public transparency record of reports and official engineering team resolutions ({items.length} total).
         </p>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-7 shadow-xs">
-        <FeedbackLog items={items} />
-      </div>
+      <FeedbackLog items={items} />
     </main>
   );
 }

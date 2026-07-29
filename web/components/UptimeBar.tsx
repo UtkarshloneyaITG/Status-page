@@ -1,11 +1,14 @@
+"use client";
+
+import { motion } from "framer-motion";
 import type { Day } from "@/lib/api";
 import { isNotable, meta } from "@/lib/status";
 
 function describe(day: Day): string {
   const m = meta(day.status);
   const pct =
-    day.uptime === null ? "no uptime data" : `${day.uptime.toFixed(2)}% uptime`;
-  return `${day.date}: ${m.label}, ${pct}`;
+    day.uptime === null ? "No uptime data" : `${day.uptime.toFixed(2)}% uptime`;
+  return `${day.date}: ${m.label} (${pct})`;
 }
 
 export default function UptimeBar({
@@ -19,28 +22,52 @@ export default function UptimeBar({
 
   return (
     <div>
-      <div aria-hidden="true" className="flex h-8 items-stretch gap-[2px]">
-        {days.map((day) => {
+      <div aria-hidden="true" className="flex h-7 items-stretch gap-1">
+        {days.map((day, idx) => {
+          const m = meta(day.status);
+          const isToday = idx === days.length - 1;
+          const isNearRight = idx > 70;
+          const isNearLeft = idx < 15;
+
+          const positionClass = isNearRight
+            ? "right-0 mb-2"
+            : isNearLeft
+            ? "left-0 mb-2"
+            : "left-1/2 -translate-x-1/2 mb-2";
+
           const segment = (
-            <span
-              className={`block h-full w-full rounded-full ${meta(day.status).bar}`}
+            <motion.span
+              whileHover={{ scaleY: 1.25 }}
+              transition={{ duration: 0.15 }}
+              className={`block h-full w-full rounded-none transition-colors ${m.bar} ${
+                isToday ? "ring-2 ring-indigo-500/80 ring-offset-1" : ""
+              }`}
             />
           );
+
           const tooltip = (
-            <span className="pointer-events-none absolute bottom-full left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2.5 py-1 text-[11px] font-medium text-white shadow-lg group-hover:block group-focus:block mb-1.5">
-              {describe(day)}
+            <span
+              className={`pointer-events-none absolute bottom-full ${positionClass} z-30 hidden group-hover/bar:flex group-hover/bar:flex-col group-focus/bar:flex group-focus/bar:flex-col w-max max-w-xs rounded-none bg-slate-900 px-3 py-2 text-[11px] font-medium text-white backdrop-blur-md border border-slate-700/80`}
+            >
+              <span className="font-bold text-slate-200">
+                {day.date} {isToday ? "(Today)" : ""}
+              </span>
+              <span className="flex items-center gap-1.5 mt-0.5 text-[11px]">
+                <span className={`h-2 w-2 rounded-none ${m.dot}`} />
+                <span className="text-slate-100">{m.label}</span>
+                <span className="text-slate-400 font-semibold">
+                  • {day.uptime === null ? "N/A" : `${day.uptime.toFixed(2)}%`}
+                </span>
+              </span>
             </span>
           );
 
-          // ponytail: only days where something happened are focusable. Making
-          // all 90 focusable per service would put ~540 tab stops on the page
-          // for information the screen-reader summary below already carries.
           return isNotable(day.status) ? (
             <button
               key={day.date}
               type="button"
               tabIndex={0}
-              className="group relative min-w-[2px] flex-1 cursor-default rounded-full outline-none focus-visible:ring-2 focus-visible:ring-slate-900 dark:focus-visible:ring-slate-100"
+              className="group/bar relative flex-1 cursor-default outline-none"
             >
               {segment}
               {tooltip}
@@ -48,7 +75,7 @@ export default function UptimeBar({
           ) : (
             <span
               key={day.date}
-              className="group relative min-w-[2px] flex-1 rounded-full"
+              className="group/bar relative flex-1"
             >
               {segment}
               {tooltip}
@@ -57,7 +84,6 @@ export default function UptimeBar({
         })}
       </div>
 
-      {/* The same information the tooltips carry, in reading order. */}
       <p className="sr-only">
         {serviceName}: {days.length}-day history.{" "}
         {notable.length === 0

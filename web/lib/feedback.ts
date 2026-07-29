@@ -82,7 +82,7 @@ export function apiUrl(path: string): string {
 export async function getPublicFeedback(): Promise<FeedbackItem[]> {
   try {
     const res = await fetch(apiUrl("/api/v1/feedback"), {
-      next: { revalidate: 30 },
+      cache: "no-store",
     });
     if (!res.ok) return [];
     return (await res.json()).items;

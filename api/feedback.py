@@ -213,6 +213,14 @@ async def inbox(
     return {"counts": counts, "items": [_admin_view(d, names) for d in docs]}
 
 
+def _invalidate_cache():
+    try:
+        from api import main
+        main.invalidate_cache()
+    except Exception:
+        pass
+
+
 @admin_router.patch("/{ref_code}")
 async def triage(
     ref_code: str,
@@ -241,6 +249,7 @@ async def triage(
     )
     if result.matched_count == 0:
         raise HTTPException(404, "Not found")
+    _invalidate_cache()
     return {"ok": True}
 
 
@@ -266,6 +275,7 @@ async def bulk(
     result = await request.app.state.db.feedback.update_many(
         {"ref_code": {"$in": refs}}, {"$set": changes}
     )
+    _invalidate_cache()
     return {"updated": result.modified_count}
 
 
@@ -276,4 +286,5 @@ async def delete(
     result = await request.app.state.db.feedback.delete_one({"ref_code": ref_code})
     if result.deleted_count == 0:
         raise HTTPException(404, "Not found")
+    _invalidate_cache()
     return {"ok": True}

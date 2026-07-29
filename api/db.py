@@ -60,12 +60,14 @@ VALIDATORS = {
             "current_status": {"enum": STATUSES},
             "position": {"bsonType": "int"},
             "created_at": {"bsonType": "date"},
+            "updated_at": {"bsonType": ["date", "null"]},
         },
         ["name", "current_status", "position"],
     ),
     "status_history": _obj(
         {
             "service_id": {"bsonType": "objectId"},
+            "previous_status": {"bsonType": ["string", "null"]},
             "status": {"enum": STATUSES},
             "note": {"bsonType": ["string", "null"]},
             "changed_by": {"bsonType": ["string", "null"]},

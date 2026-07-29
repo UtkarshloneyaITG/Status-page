@@ -66,14 +66,14 @@ export default function ReportForm({
     return (
       <div
         role="status"
-        className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-6 shadow-xs"
+        className="rounded-none border border-emerald-200 bg-emerald-50/80 p-6"
       >
         <p className="font-bold text-emerald-900 text-base">
           Report Logged Successfully!
         </p>
         <p className="mt-2 text-sm text-emerald-800">
           Your tracking reference code is{" "}
-          <span className="rounded-md bg-emerald-100 border border-emerald-200 px-2 py-0.5 font-mono font-bold text-emerald-900">
+          <span className="rounded-none bg-emerald-100 border border-emerald-200 px-2 py-0.5 font-mono font-bold text-emerald-900">
             {ref}
           </span>
           . Use this ID to track updates. Once resolved, it will appear in the public log.
@@ -90,7 +90,7 @@ export default function ReportForm({
   }
 
   const field =
-    "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-2xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all placeholder:text-slate-400";
+    "w-full rounded-none border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-indigo-500 transition-all placeholder:text-slate-400";
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
@@ -107,9 +107,9 @@ export default function ReportForm({
           ).map(([value, label]) => (
             <label
               key={value}
-              className={`flex items-center gap-2 rounded-lg border px-3.5 py-2 text-xs font-semibold cursor-pointer transition-all ${
+              className={`flex items-center gap-2 rounded-none border px-3.5 py-2 text-xs font-semibold cursor-pointer transition-all ${
                 type === value
-                  ? "border-indigo-600 bg-indigo-50/70 text-indigo-900 shadow-2xs"
+                  ? "border-indigo-600 bg-indigo-50/70 text-indigo-900"
                   : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
               }`}
             >
@@ -185,7 +185,7 @@ export default function ReportForm({
       </div>
 
       {error && (
-        <p role="alert" className="text-xs font-semibold text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+        <p role="alert" className="text-xs font-semibold text-red-600 bg-red-50 p-3 rounded-none border border-red-200">
           {error}
         </p>
       )}
@@ -193,7 +193,7 @@ export default function ReportForm({
       <button
         type="submit"
         disabled={sending}
-        className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700 disabled:opacity-50"
+        className="w-full rounded-none bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
       >
         {sending ? "Sending Report…" : "Submit Report"}
       </button>

@@ -49,6 +49,10 @@ app.include_router(feedback.admin_router)
 _cache: dict[str, tuple[float, Summary]] = {}
 
 
+def invalidate_cache():
+    _cache.clear()
+
+
 async def _build_summary(db) -> Summary:
     now = datetime.now(timezone.utc)
 
