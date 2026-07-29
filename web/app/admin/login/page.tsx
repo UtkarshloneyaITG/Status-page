@@ -42,38 +42,58 @@ export default function LoginPage() {
   }
 
   const field =
-    "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:focus-visible:ring-slate-100";
+    "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-2xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all placeholder:text-slate-400";
 
   return (
-    <main className="mx-auto w-full max-w-sm px-4 py-24">
-      <h1 className="text-xl font-semibold">Admin sign in</h1>
-      <form onSubmit={onSubmit} className="mt-6 space-y-4">
-        <label className="block text-sm">
-          <span className="mb-1 block font-medium">Email</span>
-          <input name="email" type="email" required className={field} />
-        </label>
-        <label className="block text-sm">
-          <span className="mb-1 block font-medium">Password</span>
-          <input
-            name="password"
-            type="password"
-            required
-            className={field}
-          />
-        </label>
-        {error && (
-          <p role="alert" className="text-sm text-red-700 dark:text-red-400">
-            {error}
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-16 sm:px-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xs">
+        <div className="flex flex-col items-center text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 font-bold text-white text-xl shadow-md shadow-indigo-200">
+            S
+          </span>
+          <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-900">
+            Admin Portal
+          </h1>
+          <p className="mt-1 text-xs font-medium text-slate-500">
+            Sign in to manage status reports and services
           </p>
-        )}
-        <button
-          type="submit"
-          disabled={busy}
-          className="w-full rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
-        >
-          {busy ? "Signing in…" : "Sign in"}
-        </button>
-      </form>
+        </div>
+
+        <form onSubmit={onSubmit} className="mt-6 space-y-4">
+          <label className="block text-xs">
+            <span className="mb-1.5 block font-bold text-slate-700">Email Address</span>
+            <input
+              name="email"
+              type="email"
+              required
+              placeholder="admin@example.com"
+              className={field}
+            />
+          </label>
+          <label className="block text-xs">
+            <span className="mb-1.5 block font-bold text-slate-700">Password</span>
+            <input
+              name="password"
+              type="password"
+              required
+              placeholder="••••••••"
+              className={field}
+            />
+          </label>
+          {error && (
+            <p role="alert" className="text-xs font-semibold text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+              {error}
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={busy}
+            className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {busy ? "Signing in…" : "Sign in to Dashboard"}
+          </button>
+        </form>
+      </div>
     </main>
   );
 }

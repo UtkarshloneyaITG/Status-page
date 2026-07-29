@@ -96,28 +96,33 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-10 sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold">Reports</h1>
+    <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-12 space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Admin Inbox</h1>
+          <p className="mt-1 text-xs font-medium text-slate-500">
+            Triage, update status, and respond to incoming user reports
+          </p>
+        </div>
         <button
           onClick={signOut}
-          className="text-sm text-slate-500 underline dark:text-slate-400"
+          className="rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-slate-900 transition-colors"
         >
           Sign out
         </button>
       </div>
 
       {inbox && (
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {["new", "in_progress", "fixed", "wont_fix"].map((s) => (
             <div
               key={s}
-              className="rounded-lg border border-slate-200 px-4 py-3 dark:border-slate-800"
+              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs"
             >
-              <div className="text-2xl font-semibold">
+              <div className="text-3xl font-bold text-slate-900">
                 {inbox.counts[s] ?? 0}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
+              <div className="mt-1 text-xs font-semibold text-slate-500">
                 {feedbackMeta(s).label}
               </div>
             </div>
@@ -125,16 +130,16 @@ export default function AdminPage() {
         </div>
       )}
 
-      <div className="mt-6 flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {FILTERS.map(([value, label]) => (
           <button
             key={value}
             onClick={() => setFilter(value)}
             aria-pressed={filter === value}
-            className={`rounded-full px-3 py-1 text-xs font-medium ${
+            className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all ${
               filter === value
-                ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
-                : "border border-slate-300 dark:border-slate-700"
+                ? "bg-indigo-600 text-white shadow-2xs"
+                : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
             }`}
           >
             {label}
@@ -143,49 +148,51 @@ export default function AdminPage() {
       </div>
 
       {selected.size > 0 && (
-        <div className="mt-4 flex items-center gap-3 rounded-lg bg-slate-100 px-4 py-2 text-sm dark:bg-slate-900">
-          <span>{selected.size} selected</span>
+        <div className="flex items-center justify-between rounded-xl border border-indigo-200 bg-indigo-50/80 px-4 py-3 text-xs font-semibold text-indigo-900 shadow-2xs">
+          <span>{selected.size} reports selected</span>
           <button
             onClick={bulkFix}
-            className="rounded-md bg-emerald-600 px-3 py-1 text-xs font-medium text-white"
+            className="rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 transition-colors"
           >
-            Mark fixed
+            Mark selected fixed ✓
           </button>
         </div>
       )}
 
       {error && (
-        <p role="alert" className="mt-4 text-sm text-red-700 dark:text-red-400">
+        <div role="alert" className="text-xs font-semibold text-red-600 bg-red-50 p-3.5 rounded-xl border border-red-200">
           {error}
-        </p>
+        </div>
       )}
 
-      <ul className="mt-6 divide-y divide-slate-200 dark:divide-slate-800">
-        {inbox?.items.length === 0 && (
-          <li className="py-8 text-sm text-slate-500 dark:text-slate-400">
-            Nothing here.
-          </li>
-        )}
-        {inbox?.items.map((item) => (
-          <Report
-            key={item.ref_code}
-            item={item}
-            checked={selected.has(item.ref_code)}
-            onToggleSelect={() =>
-              setSelected((prev) => {
-                const next = new Set(prev);
-                if (next.has(item.ref_code)) {
-                  next.delete(item.ref_code);
-                } else {
-                  next.add(item.ref_code);
-                }
-                return next;
-              })
-            }
-            onPatch={(body) => patch(item.ref_code, body)}
-          />
-        ))}
-      </ul>
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
+        <ul className="divide-y divide-slate-100">
+          {inbox?.items.length === 0 && (
+            <li className="py-12 text-center text-sm font-medium text-slate-400">
+              No reports found in this view.
+            </li>
+          )}
+          {inbox?.items.map((item) => (
+            <Report
+              key={item.ref_code}
+              item={item}
+              checked={selected.has(item.ref_code)}
+              onToggleSelect={() =>
+                setSelected((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(item.ref_code)) {
+                    next.delete(item.ref_code);
+                  } else {
+                    next.add(item.ref_code);
+                  }
+                  return next;
+                })
+              }
+              onPatch={(body) => patch(item.ref_code, body)}
+            />
+          ))}
+        </ul>
+      </div>
     </main>
   );
 }
@@ -205,61 +212,69 @@ function Report({
   const m = feedbackMeta(item.status);
 
   return (
-    <li className="py-5">
-      <div className="flex items-start gap-3">
+    <li className="py-5 first:pt-0 last:pb-0">
+      <div className="flex items-start gap-3.5">
         <input
           type="checkbox"
           checked={checked}
           onChange={onToggleSelect}
           aria-label={`Select ${item.ref_code}`}
-          className="mt-1.5 h-4 w-4"
+          className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
         />
 
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-            <span className="font-medium">{item.title}</span>
-            <span className={`flex items-center gap-1.5 text-xs font-medium ${m.text}`}>
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+            <h3 className="font-semibold text-slate-900 text-sm sm:text-base">{item.title}</h3>
+            <span className={`inline-flex items-center gap-1.5 text-xs ${m.text}`}>
               <span aria-hidden="true">{m.icon}</span>
               {m.label}
             </span>
           </div>
 
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
             {item.description}
           </p>
 
-          <p className="mt-2 flex flex-wrap gap-x-3 text-xs text-slate-500 dark:text-slate-400">
-            <span className="font-mono">{item.ref_code}</span>
-            <span>{item.type === "issue" ? "Issue" : "Suggestion"}</span>
-            {item.service && <span>{item.service}</span>}
-            {item.reporter_email && <span>{item.reporter_email}</span>}
-            <time dateTime={item.created_at}>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
+            <span className="font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-semibold text-[11px]">
+              {item.ref_code}
+            </span>
+            <span className="capitalize">{item.type}</span>
+            {item.service && <span>• {item.service}</span>}
+            {item.reporter_email && <span>• {item.reporter_email}</span>}
+            <time dateTime={item.created_at} className="text-[11px]">
               {new Date(item.created_at).toUTCString()}
             </time>
-            {item.is_public && <span>Published</span>}
-          </p>
+            {item.is_public && (
+              <span className="rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                Published
+              </span>
+            )}
+          </div>
 
           {item.browser_meta && (
-            <details className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-              <summary className="cursor-pointer">Environment</summary>
-              <dl className="mt-1 space-y-0.5">
+            <details className="text-xs text-slate-500">
+              <summary className="cursor-pointer font-semibold text-slate-600 hover:text-slate-800">
+                Environment Details
+              </summary>
+              <dl className="mt-1.5 space-y-1 rounded-lg bg-slate-50 p-2.5 text-[11px]">
                 {Object.entries(item.browser_meta).map(([k, v]) => (
                   <div key={k} className="flex gap-2">
-                    <dt className="font-medium">{k}</dt>
-                    <dd className="truncate">{v}</dd>
+                    <dt className="font-bold text-slate-700 capitalize">{k.replace("_", " ")}:</dt>
+                    <dd className="truncate text-slate-600">{v}</dd>
                   </div>
                 ))}
               </dl>
             </details>
           )}
 
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <label className="text-xs text-slate-500 dark:text-slate-400">
-              Status
+          <div className="pt-2 flex flex-wrap items-center gap-2">
+            <label className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+              Status:
               <select
                 value={item.status}
                 onChange={(e) => onPatch({ status: e.target.value })}
-                className="ml-2 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-950"
+                className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-800 shadow-2xs outline-none focus:border-indigo-500"
               >
                 {FEEDBACK_STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -271,33 +286,33 @@ function Report({
 
             <button
               onClick={() => onPatch({ is_public: !item.is_public })}
-              className="rounded-md border border-slate-300 px-2 py-1 text-xs dark:border-slate-700"
+              className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors"
             >
-              {item.is_public ? "Hide from status page" : "Show on status page"}
+              {item.is_public ? "Hide from Status Page" : "Publish on Status Page"}
             </button>
 
             {item.status !== "fixed" && (
               <button
                 onClick={() => onPatch({ status: "fixed", admin_reply: reply || null })}
-                className="rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white"
+                className="rounded-lg bg-emerald-600 px-3 py-1 text-xs font-bold text-white shadow-2xs hover:bg-emerald-700 transition-colors"
               >
-                Mark fixed
+                Mark Fixed ✓
               </button>
             )}
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 pt-1">
             <input
               value={reply}
               onChange={(e) => setReply(e.target.value)}
-              placeholder="Public reply, shown on the status page"
-              className="min-w-0 flex-1 rounded-md border border-slate-300 px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-950"
+              placeholder="Write a public response for the status page..."
+              className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 shadow-2xs outline-none focus:border-indigo-500"
             />
             <button
               onClick={() => onPatch({ admin_reply: reply || null })}
-              className="rounded-md border border-slate-300 px-2 py-1 text-xs dark:border-slate-700"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors"
             >
-              Save reply
+              Save Response
             </button>
           </div>
         </div>

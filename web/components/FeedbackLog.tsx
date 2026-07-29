@@ -13,39 +13,44 @@ function Badge({ status }: { status: string }) {
 export default function FeedbackLog({ items }: { items: FeedbackItem[] }) {
   if (items.length === 0) {
     return (
-      <p className="text-sm text-slate-500 dark:text-slate-400">
-        Nothing reported and resolved yet.
-      </p>
+      <div className="py-8 text-center text-sm text-slate-500">
+        No incidents or resolutions logged yet.
+      </div>
     );
   }
 
   return (
-    <ul className="divide-y divide-slate-200 dark:divide-slate-800">
+    <ul className="divide-y divide-slate-100">
       {items.map((item) => (
-        <li key={item.ref_code} className="py-4">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-            <span className="font-medium">{item.title}</span>
+        <li key={item.ref_code} className="py-5 first:pt-0 last:pb-0">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+            <h3 className="font-semibold text-slate-900 text-sm sm:text-base">
+              {item.title}
+            </h3>
             <Badge status={item.status} />
           </div>
 
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+          <p className="mt-1.5 text-xs sm:text-sm text-slate-600 leading-relaxed">
             {item.description}
           </p>
 
           {item.admin_reply && (
-            <p className="mt-2 border-l-2 border-slate-300 pl-3 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-200">
+            <div className="mt-3 rounded-lg border-l-4 border-indigo-500 bg-slate-50 p-3 text-xs text-slate-700">
+              <span className="font-bold text-slate-900 block mb-0.5">Team Update:</span>
               {item.admin_reply}
-            </p>
+            </div>
           )}
 
-          <p className="mt-2 flex flex-wrap gap-x-3 text-xs text-slate-500 dark:text-slate-400">
-            <span className="font-mono">{item.ref_code}</span>
-            <span>{item.type === "issue" ? "Issue" : "Suggestion"}</span>
-            {item.service && <span>{item.service}</span>}
-            <time dateTime={item.resolved_at ?? item.created_at}>
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
+            <span className="font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-semibold text-[11px]">
+              {item.ref_code}
+            </span>
+            <span className="capitalize">{item.type}</span>
+            {item.service && <span>• {item.service}</span>}
+            <time dateTime={item.resolved_at ?? item.created_at} className="ml-auto text-[11px]">
               {new Date(item.resolved_at ?? item.created_at).toUTCString()}
             </time>
-          </p>
+          </div>
         </li>
       ))}
     </ul>

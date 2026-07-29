@@ -27,7 +27,7 @@ export default function UptimeBar({
             />
           );
           const tooltip = (
-            <span className="pointer-events-none absolute bottom-full left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-xs text-white group-hover:block group-focus:block dark:bg-slate-100 dark:text-slate-900">
+            <span className="pointer-events-none absolute bottom-full left-1/2 z-10 hidden -translate-x-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2.5 py-1 text-[11px] font-medium text-white shadow-lg group-hover:block group-focus:block mb-1.5">
               {describe(day)}
             </span>
           );

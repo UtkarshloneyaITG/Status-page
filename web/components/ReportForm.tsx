@@ -66,51 +66,60 @@ export default function ReportForm({
     return (
       <div
         role="status"
-        className="rounded-xl border border-emerald-300 bg-emerald-50 p-6 dark:border-emerald-800 dark:bg-emerald-950"
+        className="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-6 shadow-xs"
       >
-        <p className="font-medium text-emerald-900 dark:text-emerald-100">
-          Thanks — that&apos;s logged.
+        <p className="font-bold text-emerald-900 text-base">
+          Report Logged Successfully!
         </p>
-        <p className="mt-1 text-sm text-emerald-800 dark:text-emerald-200">
-          Your tracking ID is{" "}
-          <span className="font-mono font-semibold">{ref}</span>. Quote it if
-          you follow up. Once we fix it, it appears in the log below.
+        <p className="mt-2 text-sm text-emerald-800">
+          Your tracking reference code is{" "}
+          <span className="rounded-md bg-emerald-100 border border-emerald-200 px-2 py-0.5 font-mono font-bold text-emerald-900">
+            {ref}
+          </span>
+          . Use this ID to track updates. Once resolved, it will appear in the public log.
         </p>
         <button
           type="button"
           onClick={() => setRef(null)}
-          className="mt-4 text-sm font-medium text-emerald-900 underline dark:text-emerald-100"
+          className="mt-4 text-xs font-semibold text-emerald-900 underline hover:text-emerald-700"
         >
-          Send another
+          Submit another report →
         </button>
       </div>
     );
   }
 
   const field =
-    "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:focus-visible:ring-slate-100";
+    "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-2xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all placeholder:text-slate-400";
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <fieldset>
-        <legend className="mb-2 text-sm font-medium">
-          What would you like to tell us?
+        <legend className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+          Feedback Category
         </legend>
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-3">
           {(
             [
-              ["issue", "Report an issue"],
-              ["suggestion", "Suggest an improvement"],
+              ["issue", "Report an Issue"],
+              ["suggestion", "Suggest Improvement"],
             ] as const
           ).map(([value, label]) => (
-            <label key={value} className="flex items-center gap-2 text-sm">
+            <label
+              key={value}
+              className={`flex items-center gap-2 rounded-lg border px-3.5 py-2 text-xs font-semibold cursor-pointer transition-all ${
+                type === value
+                  ? "border-indigo-600 bg-indigo-50/70 text-indigo-900 shadow-2xs"
+                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              }`}
+            >
               <input
                 type="radio"
                 name="type"
                 value={value}
                 checked={type === value}
                 onChange={() => setType(value)}
-                className="h-4 w-4"
+                className="h-3.5 w-3.5 text-indigo-600 focus:ring-indigo-500"
               />
               {label}
             </label>
@@ -118,12 +127,12 @@ export default function ReportForm({
         </div>
       </fieldset>
 
-      <label className="block text-sm">
-        <span className="mb-1 block font-medium">
-          Which service? <span className="font-normal text-slate-500">Optional</span>
+      <label className="block text-xs">
+        <span className="mb-1.5 block font-bold text-slate-700">
+          Affected Service <span className="font-normal text-slate-400">(Optional)</span>
         </span>
         <select name="service_id" className={field} defaultValue="">
-          <option value="">Not sure</option>
+          <option value="">General / Not Sure</option>
           {services.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}
@@ -132,39 +141,42 @@ export default function ReportForm({
         </select>
       </label>
 
-      <label className="block text-sm">
-        <span className="mb-1 block font-medium">Summary</span>
+      <label className="block text-xs">
+        <span className="mb-1.5 block font-bold text-slate-700">Title / Summary</span>
         <input
           name="title"
           required
           maxLength={120}
-          placeholder="Checkout button does nothing"
+          placeholder="e.g. Dashboard loading slowly"
           className={field}
         />
       </label>
 
-      <label className="block text-sm">
-        <span className="mb-1 block font-medium">What happened?</span>
+      <label className="block text-xs">
+        <span className="mb-1.5 block font-bold text-slate-700">Description</span>
         <textarea
           name="description"
           required
           maxLength={2000}
           rows={4}
-          placeholder="What you did, what you expected, what happened instead."
+          placeholder="Please describe what happened and how to reproduce it..."
           className={field}
         />
       </label>
 
-      <label className="block text-sm">
-        <span className="mb-1 block font-medium">
-          Email <span className="font-normal text-slate-500">
-            Optional — only used to tell you when it&apos;s fixed
-          </span>
+      <label className="block text-xs">
+        <span className="mb-1.5 block font-bold text-slate-700">
+          Your Email <span className="font-normal text-slate-400">(Optional - for resolution updates)</span>
         </span>
-        <input name="reporter_email" type="email" className={field} />
+        <input
+          name="reporter_email"
+          type="email"
+          placeholder="you@example.com"
+          className={field}
+        />
       </label>
 
-      {/* Honeypot: hidden from people, irresistible to bots. */}
+      {/* Honeypot */}
       <div aria-hidden="true" className="absolute left-[-9999px]">
         <label>
           Website
@@ -173,7 +185,7 @@ export default function ReportForm({
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-red-700 dark:text-red-400">
+        <p role="alert" className="text-xs font-semibold text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
           {error}
         </p>
       )}
@@ -181,9 +193,9 @@ export default function ReportForm({
       <button
         type="submit"
         disabled={sending}
-        className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
+        className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-indigo-700 disabled:opacity-50"
       >
-        {sending ? "Sending…" : "Send report"}
+        {sending ? "Sending Report…" : "Submit Report"}
       </button>
     </form>
   );

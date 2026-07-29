@@ -1,11 +1,10 @@
 import Link from "next/link";
 
+import Legend from "@/components/Legend";
 import ReportDrawer from "@/components/ReportDrawer";
-// Restore alongside the commented-out status sections below.
-// import Legend from "@/components/Legend";
-// import ServiceGroup from "@/components/ServiceGroup";
-// import ServiceRow from "@/components/ServiceRow";
-// import StatusBanner from "@/components/StatusBanner";
+import ServiceGroup from "@/components/ServiceGroup";
+import ServiceRow from "@/components/ServiceRow";
+import StatusBanner from "@/components/StatusBanner";
 import { allServices, getSummary } from "@/lib/api";
 import { getPublicFeedback } from "@/lib/feedback";
 
@@ -19,24 +18,23 @@ export default async function Page() {
 
   if (!summary) {
     return (
-      <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-16">
+      <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
         <section
           aria-live="polite"
-          className="flex items-center gap-4 rounded-xl border border-amber-300 bg-amber-50 px-6 py-6 dark:border-amber-800 dark:bg-amber-950"
+          className="flex items-center gap-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-6 sm:p-8 shadow-xs"
         >
           <span
             aria-hidden="true"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-400 text-lg font-bold text-white"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-500 text-xl font-bold text-white shadow-xs"
           >
             !
           </span>
           <div>
-            <h1 className="text-xl font-semibold tracking-tight">
-              Status unavailable
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+              Status Service Currently Unavailable
             </h1>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              We can&apos;t reach the status service right now. This page will
-              recover on its own once it&apos;s back.
+            <p className="mt-1 text-sm text-slate-600">
+              We cannot reach the live status service right now. This page will automatically update once connection is restored.
             </p>
           </div>
         </section>
@@ -50,65 +48,93 @@ export default async function Page() {
   }));
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-16">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
-          {summary.product_name}
-        </p>
+    <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-12 space-y-8">
+      {/* Top Header Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+            {summary.product_name} Services
+          </h2>
+          <p className="mt-1 text-xs font-medium text-slate-500">
+            Real-time status monitor across all systems
+          </p>
+        </div>
         <ReportDrawer services={services} />
       </div>
 
-      {/* Global status banner — hidden for now, alongside the service list. */}
+      {/* Global Status Banner — hidden */}
       {/* <StatusBanner indicator={summary.indicator} /> */}
 
-      {/* Service list and legend — hidden for now. Uncomment to restore;
-          the API still returns everything these need. */}
+      {/* Service List Section & Legend — hidden */}
       {/*
       <section
-        aria-label="Services"
-        className="mt-10 rounded-xl border border-slate-200 bg-white px-4 sm:px-6 dark:border-slate-800 dark:bg-slate-900"
+        aria-label="Services Uptime Breakdown"
+        className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-7 shadow-xs"
       >
-        {summary.groups.map((group) => (
-          <ServiceGroup key={group.id} group={group} />
-        ))}
-        {summary.ungrouped.map((service) => (
-          <ServiceRow key={service.id} service={service} />
-        ))}
+        <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+          <h3 className="text-base font-bold text-slate-900">Services & Infrastructure</h3>
+          <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
+            90-Day History
+          </span>
+        </div>
+
+        {summary.groups.length > 0 ? (
+          summary.groups.map((group) => (
+            <ServiceGroup key={group.id} group={group} />
+          ))
+        ) : (
+          summary.ungrouped.map((service) => (
+            <ServiceRow key={service.id} service={service} />
+          ))
+        )}
+
+        {summary.groups.length > 0 && summary.ungrouped.length > 0 && (
+          <div className="pt-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+              Other Services
+            </h4>
+            {summary.ungrouped.map((service) => (
+              <ServiceRow key={service.id} service={service} />
+            ))}
+          </div>
+        )}
       </section>
 
-      <div className="mt-6">
-        <Legend />
-      </div>
+      <Legend />
       */}
 
+      {/* Public Resolved Issues Section */}
       <section
         aria-labelledby="log-heading"
-        className="mt-14 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white px-6 py-5 dark:border-slate-800 dark:bg-slate-900"
+        className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-xs"
       >
         <div>
-          <h2 id="log-heading" className="font-semibold">
-            Reported and resolved
+          <h2 id="log-heading" className="text-lg font-bold text-slate-900">
+            Incident Log & Resolved Issues
           </h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-sm text-slate-500">
             {feedback.length === 0
-              ? "Nothing published yet."
-              : `${feedback.length} ${feedback.length === 1 ? "report" : "reports"} people told us about, and what we did.`}
+              ? "No active or recent incidents reported."
+              : `${feedback.length} ${
+                  feedback.length === 1 ? "report" : "reports"
+                } submitted and addressed by team.`}
           </p>
         </div>
         <Link
           href="/reports"
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-slate-900 transition-colors"
         >
-          View the log
+          View Full Public Log →
         </Link>
       </section>
 
-      <p className="mt-10 text-xs text-slate-400 dark:text-slate-600">
-        Updated{" "}
+      {/* Footer Timestamp */}
+      <div className="pt-2 text-center text-xs font-medium text-slate-400">
+        Last status update:{" "}
         <time dateTime={summary.updated_at}>
           {new Date(summary.updated_at).toUTCString()}
         </time>
-      </p>
+      </div>
     </main>
   );
 }
