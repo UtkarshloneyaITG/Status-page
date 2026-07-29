@@ -37,7 +37,7 @@ def compute_days(events, created_at: datetime, now: datetime, days: int = 90):
     thousand events per service, precompute spans once and bucket them by day.
     """
     today = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    first = today - DAY * days
+    first = today - DAY * (days - 1)
 
     out = []
     for offset in range(days):
