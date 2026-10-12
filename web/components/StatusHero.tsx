@@ -26,7 +26,9 @@ export default function StatusHero({
             Live Status Monitor 
 
           </span>
-          <a href="https://askfolio.onrender.com"> note ai</a>
+          
+<a href="https://askfolio.onrender.com" target="_blank" rel="noopener noreferrer">Note AI</a>
+
         </div>
         <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
           {productName} Systems Status
