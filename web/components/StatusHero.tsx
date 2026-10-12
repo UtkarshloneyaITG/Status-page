@@ -23,7 +23,7 @@ export default function StatusHero({
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-200/60">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Live Status Monitor <a href="https://askfolio.onrender.com"> note ai<a/>
+            Live Status Monitor <a href="https://askfolio.onrender.com"> note ai</a>
 
           </span>
         </div>
